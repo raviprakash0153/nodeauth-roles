@@ -160,9 +160,9 @@ router.post('/login/employee', async (req, res) => {
 
 //profile of users
 router.post(
-  '/profile',
+  '/profile/user',
   authenticate,
-  permission('admin', 'employee'),
+  permission('user'),
   async (req, res) => {
     const { name, location } = req.body;
 
@@ -196,40 +196,131 @@ router.post(
   }
 );
 
-//only admin and user can modify niot employee
+//profile of users
+router.post(
+  '/profile/employee',
+  authenticate,
+  permission('employee'),
+  async (req, res) => {
+    const { name, location } = req.body;
+
+    const user = await User.findOne({ _id: req.user.id });
+    console.log(user.role);
+
+    try {
+      let profile = await Profile.findOne({ user: req.user.id });
+
+      if (!profile) {
+        const newProfile = new Profile({
+          user: user,
+          name: name,
+          location: location,
+        });
+        //create profile
+        profile = new Profile(newProfile);
+        await profile.save();
+        return res.status(201).json({
+          msg: 'Profile created',
+          profile: profile,
+        });
+      }
+      return res.status(201).json({
+        msg: 'Profile already exist ',
+        profile: profile,
+      });
+    } catch (err) {
+      res.status(400).json({ msg: 'Server  error' });
+    }
+  }
+);
+
+//profile of users
+router.post(
+  '/profile/admin',
+  authenticate,
+  permission('admin'),
+  async (req, res) => {
+    const { name, location } = req.body;
+
+    const user = await User.findOne({ _id: req.user.id });
+    console.log(user.role);
+
+    try {
+      let profile = await Profile.findOne({ user: req.user.id });
+
+      if (!profile) {
+        const newProfile = new Profile({
+          user: user,
+          name: name,
+          location: location,
+        });
+        //create profile
+        profile = new Profile(newProfile);
+        await profile.save();
+        return res.status(201).json({
+          msg: 'Profile created',
+          profile: profile,
+        });
+      }
+      return res.status(201).json({
+        msg: 'Profile already exist ',
+        profile: profile,
+      });
+    } catch (err) {
+      res.status(400).json({ msg: 'Server  error' });
+    }
+  }
+);
+
+//only admin and user can modify not employee
 router.put(
   '/profile/todo/user',
   authenticate,
   permission('user', 'admin', 'employee'),
   async (req, res) => {
     try {
-      const profile = await Profile.findOne({ user: req.user.id });
+      //console.log(req.user.id);
+      const user = await User.findOne({ _id: req.user.id });
+      if (user.role === 'user') {
+        console.log(user.role);
+        const profile = await Profile.findOne({ user: req.user.id });
 
-      if (!profile) {
-        res.status(400).json({ msg: 'First create profile' });
+        if (!profile) {
+          res.status(400).json({ msg: 'First create profile' });
+        }
+        const { title, todoDesc } = req.body;
+
+        const newTodo = {
+          title,
+          todoDesc,
+        };
+        profile.todo.unshift(newTodo);
+        await profile.save();
+        //console.log(profile);
+        return res.status(200).json({
+          msg: `You can add todo as you are ${user.role}`,
+          profile: profile,
+        });
       }
-      const { title, todoDesc } = req.body;
-
-      const newTodo = {
-        title,
-        todoDesc,
-      };
-      profile.todo.unshift(newTodo);
-      await profile.save();
-      //console.log(profile);
-      res.status(200).json({ msg: 'You can add todo', profile: profile });
+      const user1 = await User.findOne({ role: 'user' });
+      //console.log(user1);
+      const profile1 = await Profile.findOne({ user: user1._id });
+      return res.status(200).json({
+        msg: `As you are in ${user1.role} profile as ${user.role} you can only access or delete task`,
+        profile: profile1,
+      });
     } catch (err) {
       res.status(500).json({ msg: 'Server Error' });
     }
   }
 );
 
-//admin PUT todo
+//admin PUT task
 
 router.put(
   '/profile/todo/admin',
   authenticate,
-  permission('admin', 'user'),
+  permission('admin'),
   async (req, res) => {
     try {
       const profile = await Profile.findOne({ user: req.user.id });
@@ -262,45 +353,130 @@ router.put(
   permission('employee', 'admin'),
   async (req, res) => {
     try {
-      const profile = await Profile.findOne({ user: req.user.id });
+      const user = await User.findOne({ _id: req.user.id });
+      if (user.role === 'employee') {
+        const profile = await Profile.findOne({ user: req.user.id });
 
-      // console.log(profile);
+        if (!profile) {
+          res.status(400).json({ msg: 'First create profile' });
+        }
+        const { title, todoDesc } = req.body;
 
-      if (!profile) {
-        res.status(400).json({ msg: 'First create profile' });
+        const newTodo = {
+          title,
+          todoDesc,
+        };
+        profile.todo.unshift(newTodo);
+        await profile.save();
+        //console.log(profile);
+        return res
+          .status(200)
+          .json({ msg: 'You can add todo', profile: profile });
       }
-      const { title, todoDesc } = req.body;
-
-      const newTodo = {
-        title,
-        todoDesc,
-      };
-      profile.todo.unshift(newTodo);
-      await profile.save();
-      //console.log(profile);
-      res.status(200).json({ msg: 'You can add todo', profile: profile });
+      const user1 = await User.findOne({ role: 'employee' });
+      const profile1 = await Profile.findOne({ user: user1._id });
+      return res.status(200).json({
+        msg: `As you are in ${user1.role} profile as ${user.role} you can only access or delete task`,
+        profile: profile1,
+      });
     } catch (err) {
       res.status(500).json({ msg: 'Server Error' });
     }
   }
 );
 
+//admin deleteing user todo
 router.delete(
-  '/profile/todo',
+  '/profile/todo/user/:todo_id',
   authenticate,
-  permission('user', 'employee', 'admin'),
+  permission('admin'),
   async (req, res) => {
-    const profile = await Profile.findOne({ user: req.user.id });
+    try {
+      const user1 = await User.findOne({ _id: req.user.id });
+      const user = await User.findOne({ role: 'user' });
+      const profile = await Profile.findOne({ user: user._id });
 
-    if (!profile) {
-      res.status(400).json({ msg: 'profile of user do not exist' });
+      if (!profile) {
+        res.status(400).json({ msg: 'profile of user do not exist' });
+      }
+      // const index = profile.todo.map((item) => item.id);
+      const index = profile.todo
+        .map((item) => item.id)
+        .indexOf(req.params.todo_id);
+
+      console.log(index);
+      profile.todo.splice(index, 1);
+
+      await profile.save();
+      res.status(400).json({
+        msg: `You are logged in as ${user1.role} in ${user.role} profile`,
+        profile: profile,
+      });
+    } catch (err) {
+      res.status(500).json({ msg: 'Server Error' });
     }
-    // const index = profile.todo.map((item) => item.id);
-    const index = 0;
-    profile.todo.splice(index, 1);
+  }
+);
 
-    await profile.save();
-    res.json(profile);
+//admin deleting employee todo
+router.delete(
+  '/profile/todo/employee/:todo_id',
+  authenticate,
+  permission('admin'),
+  async (req, res) => {
+    try {
+      const user1 = await User.findOne({ _id: req.user.id });
+      const user = await User.findOne({ role: 'employee' });
+      const profile = await Profile.findOne({ user: user._id });
+
+      if (!profile) {
+        res.status(400).json({ msg: 'profile of user do not exist' });
+      }
+      // const index = profile.todo.map((item) => item.id);
+      const index = profile.todo
+        .map((item) => item.id)
+        .indexOf(req.params.todo_id);
+
+      console.log(index);
+      profile.todo.splice(index, 1);
+
+      await profile.save();
+      res.status(400).json({
+        msg: `You are logged in as ${user1.role} in ${user.role} profile`,
+        profile: profile,
+      });
+    } catch (err) {
+      res.status(500).json({ msg: 'Server Error' });
+    }
+  }
+);
+
+//admin deleting own todo
+router.delete(
+  '/profile/todo/admin/:todo_id',
+  authenticate,
+  permission('admin'),
+  async (req, res) => {
+    try {
+      const user = await User.findOne({ _id: req.body.id });
+      const profile = await Profile.findOne({ user: req.user.id });
+
+      if (!profile) {
+        res.status(400).json({ msg: 'profile of user do not exist' });
+      }
+      // const index = profile.todo.map((item) => item.id);
+      const index = profile.todo
+        .map((item) => item.id)
+        .indexOf(req.params.todo_id);
+
+      console.log(index);
+      profile.todo.splice(index, 1);
+
+      await profile.save();
+      res.status(400).json({ msg: 'todo deleted', profile: profile });
+    } catch (err) {
+      res.status(500).json({ msg: 'Server Error' });
+    }
   }
 );
 

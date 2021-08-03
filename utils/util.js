@@ -6,20 +6,20 @@ const passTokenadmin = async (req, res, role) => {
   if (role === 'admin') {
     const { username, password } = req.body;
     const user = await User.findOne({ username: username });
-    console.log(user);
+    //console.log(user);
     if (!user) {
       res.status(400).json({ msg: 'user do not exist' });
     }
-    console.log(user.password);
+    // console.log(user.password);
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log(isMatch);
+    // console.log(isMatch);
 
     if (isMatch) {
       const token = jwt.sign({ id: user.id }, process.env.SECRET_KEY, {
         expiresIn: 604800,
       });
 
-      console.log(token);
+      // console.log(token);
       return res
         .status(200)
         .json({ msg: `Logged in as ${user.role}`, token: token });
@@ -40,20 +40,20 @@ const passTokenuser = async (req, res, role) => {
     const { username, password } = req.body;
     //permission('admin');
     const user = await User.findOne({ username: username });
-    console.log(user);
+    //console.log(user);
     if (!user) {
       res.status(400).json({ msg: 'user do not exist' });
     }
-    console.log(user.password);
+    // console.log(user.password);
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log(isMatch);
+    //console.log(isMatch);
 
     if (isMatch) {
       const token = jwt.sign({ id: user.id }, process.env.SECRET_KEY, {
         expiresIn: 604800,
       });
 
-      console.log(token);
+      // console.log(token);
       return res
         .status(200)
         .json({ msg: `Logged in as ${user.role}`, token: token });
@@ -70,20 +70,20 @@ const passTokenemployee = async (req, res, role) => {
     const { username, password } = req.body;
     //permission('admin');
     const user = await User.findOne({ username: username });
-    console.log(user);
+    // console.log(user);
     if (!user) {
       res.status(400).json({ msg: 'user do not exist' });
     }
-    console.log(user.password);
+    // console.log(user.password);
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log(isMatch);
+    // console.log(isMatch);
 
     if (isMatch) {
       const token = jwt.sign({ id: user.id }, process.env.SECRET_KEY, {
         expiresIn: 604800,
       });
 
-      console.log(token);
+      // console.log(token);
       return res
         .status(200)
         .json({ msg: `Logged in as ${user.role}`, token: token });

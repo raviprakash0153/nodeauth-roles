@@ -8,7 +8,7 @@ const authenticate = async (req, res, next) => {
     const token = req.header('token');
     const verifiedUser = await jwt.verify(token, process.env.SECRET_KEY);
     req.user = verifiedUser;
-    console.log(req.user);
+    //console.log(req.user);
     next();
   } catch (err) {
     res.status(400).json({ msg: 'token not valid' });
@@ -19,7 +19,7 @@ const permission = (...roles) => {
   return async (req, res, next) => {
     const user = await User.findOne({ _id: req.user.id });
 
-    console.log(user);
+    // console.log(user);
     try {
       if (!roles.includes(user.role)) {
         return res
