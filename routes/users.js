@@ -432,7 +432,7 @@ router.delete(
       if (!profile) {
         res.status(400).json({ msg: 'profile of user do not exist' });
       }
-      // const index = profile.todo.map((item) => item.id);
+
       const index = profile.todo
         .map((item) => item.id)
         .indexOf(req.params.todo_id);
